@@ -24,3 +24,22 @@
 | **Protected Route Bounce**   | Open Incognito window > Go directly to `http://localhost:3000/`       | Middleware intercepts, instantly redirects to `/login`    | [ ]    |
 | **Login Route Bounce**       | Log in successfully > Manually type `/login` in URL bar               | Middleware intercepts, instantly redirects back to `/`    | [ ]    |
 | **Session Expiry / Cleared** | Log in > Open Dev Tools > Application > Delete cookies > Refresh page | Middleware detects missing session, redirects to `/login` | [ ]    |
+
+## Feature: Sign Out
+
+| #   | Scenario                 | Steps                                    | Expected Result                                            |
+| --- | ------------------------ | ---------------------------------------- | ---------------------------------------------------------- |
+| 1   | Successful sign-out      | While logged in on `/`, click "Sign Out" | Session cookies cleared; redirected to `/login`            |
+| 2   | Post-sign-out protection | After signing out, manually visit `/`    | Redirected back to `/login` (no dashboard shown)           |
+| 3   | No stale cache           | Sign out, then press browser Back        | Should not show the logged-in dashboard; lands on `/login` |
+| 4   | Works without JS         | Disable JavaScript, click "Sign Out"     | Form still submits; sign-out succeeds (server action)      |
+
+## Feature: Secure Dashboard (`/`)
+
+| #   | Scenario                    | Steps                                                     | Expected Result                                       |
+| --- | --------------------------- | --------------------------------------------------------- | ----------------------------------------------------- |
+| 1   | Authenticated access        | Log in, land on `/`                                       | Dashboard renders with "Signed in as <your email>"    |
+| 2   | Unauthenticated guard       | Clear session, visit `/` directly                         | Redirected to `/login`; no protected content rendered |
+| 3   | Correct email shown         | Log in as user A                                          | Welcome line shows user A's exact email               |
+| 4   | Tampered/expired token      | Manually corrupt the `sb-…-auth-token` cookie, reload `/` | `getUser()` rejects it; redirected to `/login`        |
+| 5   | Tracker placeholder visible | Log in                                                    | "Your Dashboard" card with placeholder copy is shown  |
