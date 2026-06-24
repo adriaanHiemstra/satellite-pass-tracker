@@ -4,7 +4,7 @@ A web application to track upcoming satellite passes based on user location.
 
 ## Live URL
 
-_To be added after deployment_
+https://satelite-pass-tracker.vercel.app/
 
 ## Test Account
 
@@ -22,3 +22,9 @@ _To be added after deployment_
 npm install
 npm run dev
 ```
+
+## Assumptions
+
+Repository & Documentation: Established the repository structure before writing any code.
+
+Next.js Defaults: Used the standard Next.js App Router configuration to keep the project clean and aligned with current standard practices.
