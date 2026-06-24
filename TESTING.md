@@ -42,4 +42,18 @@
 | 2   | Unauthenticated guard       | Clear session, visit `/` directly                         | Redirected to `/login`; no protected content rendered |
 | 3   | Correct email shown         | Log in as user A                                          | Welcome line shows user A's exact email               |
 | 4   | Tampered/expired token      | Manually corrupt the `sb-…-auth-token` cookie, reload `/` | `getUser()` rejects it; redirected to `/login`        |
-| 5   | Tracker placeholder visible | Log in                                                    | "Your Dashboard" card with placeholder copy is shown  |
+| 5   | Location search visible     | Log in                                                    | "Find Your Location" search card is shown on dashboard |
+
+## Feature: City Search — As-You-Type (Phase 3)
+
+| #   | Scenario            | Steps                                    | Expected Result                                                                       |
+| --- | ------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | Live dropdown       | Type "Paris" (do not press any button)   | Dropdown of up to 5 matches appears automatically                                     |
+| 2   | Ambiguous matches   | Type "Springfield"                       | Multiple results, each labelled with region + country                                 |
+| 3   | Select a city       | Click a result                           | Dropdown closes; input fills with full label; green "Location set" panel shows coords |
+| 4   | Console coordinates | Click a result with DevTools open        | Console logs that city's exact latitude and longitude                                 |
+| 5   | No match            | Type "asdfqwerzxcv"                       | Red "City not found. Please try again."; no dropdown                                  |
+| 6   | Min length          | Type a single character                  | No request fired; no dropdown, no error                                               |
+| 7   | Debounce            | Type quickly, watch Network tab          | One request after you pause, not one per keystroke                                    |
+| 8   | Race safety         | Type fast then change the term           | Final results match the final term (no stale overwrite)                               |
+| 9   | Edit after select   | Select a city, then edit the input       | Confirmation panel clears; live search resumes                                        |

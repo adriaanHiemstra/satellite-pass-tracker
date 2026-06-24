@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { signOut } from "./login/actions";
+import CitySearch from "./components/CitySearch";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -50,16 +51,9 @@ export default async function Home() {
             <span className="text-emerald-400 font-medium">{user.email}</span>
           </p>
 
-          {/* Placeholder dashboard card — satellite tracking features land here */}
-          <div className="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg shadow-2xl p-8">
-            <h2 className="text-xl font-semibold mb-2 text-emerald-400">
-              Your Dashboard
-            </h2>
-            <p className="text-slate-400">
-              You&apos;re securely signed in. Satellite pass tracking features
-              will appear here soon.
-            </p>
-          </div>
+          {/* City search — look up a location to get its coordinates.
+              This is a Client Component rendered inside this Server Component. */}
+          <CitySearch />
         </main>
       </div>
     </div>
