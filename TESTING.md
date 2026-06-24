@@ -57,3 +57,18 @@
 | 7   | Debounce            | Type quickly, watch Network tab          | One request after you pause, not one per keystroke                                    |
 | 8   | Race safety         | Type fast then change the term           | Final results match the final term (no stale overwrite)                               |
 | 9   | Edit after select   | Select a city, then edit the input       | Confirmation panel clears; live search resumes                                        |
+
+## Feature: Save Satellites + RLS (Core 4)
+
+| #   | Scenario           | Steps                                                  | Expected Result                                       |
+| --- | ------------------ | ------------------------------------------------------ | ----------------------------------------------------- |
+| 1   | Browse catalog     | Log in → dashboard                                     | Satellite list renders with category chips            |
+| 2   | Search by name     | Type "hubble"                                          | List filters to matching satellites                   |
+| 3   | Search by NORAD id | Type "25544"                                           | ISS appears                                           |
+| 4   | Filter by category | Click "Weather" chip                                   | Only weather satellites shown                         |
+| 5   | Save               | Click Save on a satellite                              | Instantly shows "✓ Saved" + appears in saved chips    |
+| 6   | Persistence        | Save one, reload page                                  | Still saved (loaded from DB)                          |
+| 7   | Unsave             | Click a saved ✕ chip, reload                           | Gone, and stays gone after reload                     |
+| 8   | No duplicates      | Save the same satellite twice quickly                 | Saved once; no error                                  |
+| 9   | RLS isolation      | User B signs in after user A saved items              | User B sees none of user A's saved satellites         |
+| 10  | RLS enabled (DB)   | Run the `rowsecurity` query in Supabase SQL Editor    | Both tables show `rowsecurity = true`                 |

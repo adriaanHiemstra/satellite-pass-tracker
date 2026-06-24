@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Create a Supabase client with the request and response cookies.
-  // This middleware uses the standard @supabase/ssr pattern to refresh the auth token.
-  let response = NextResponse.next({
+  // This proxy uses the standard @supabase/ssr pattern to refresh the auth token.
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// Run middleware on all routes except static files, API routes, and Next.js internals.
+// Run the proxy on all routes except static files, API routes, and Next.js internals.
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.webp).*)",

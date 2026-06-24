@@ -46,24 +46,25 @@ export default function CitySearch() {
       return;
     }
 
-    // Require at least 2 characters before hitting the API.
-    if (term.length < 2) {
-      setResults([]);
-      setError("");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
     // AbortController cancels an in-flight request if the user keeps typing,
     // so a slow old response can never overwrite a newer one (race safety).
     const controller = new AbortController();
 
-    // Debounce: wait 350ms after the last keystroke before calling the API,
-    // so we don't fire a request on every single character.
+    // Debounce: wait 350ms after the last keystroke before doing anything.
+    // All state updates happen inside this async callback rather than
+    // synchronously in the effect body.
     const timer = setTimeout(async () => {
+      // Require at least 2 characters before hitting the API.
+      if (term.length < 2) {
+        setResults([]);
+        setError("");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
       try {
         const res = await fetch(
           `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
