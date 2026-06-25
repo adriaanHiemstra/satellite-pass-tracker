@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { signOut } from "./login/actions";
 import CitySearch from "./components/CitySearch";
+import LocationsBar from "./components/LocationsBar";
 import SatelliteBrowser from "./components/SatelliteBrowser";
+import PassesView from "./components/PassesView";
 import { SATELLITES } from "@/lib/satellites";
 
 export default async function Home() {
@@ -26,6 +28,22 @@ export default async function Home() {
     .order("created_at", { ascending: false });
 
   const savedIds = (savedRows ?? []).map((row) => row.satellite_id as number);
+
+  // Load the user's saved cities (up to 5). RLS scopes these to the user.
+  const { data: locationRows } = await supabase
+    .from("saved_locations")
+    .select("id, city_name, is_active")
+    .order("created_at", { ascending: true });
+
+  const locations = locationRows ?? [];
+  // The active city is the observer location passes are computed from.
+  const activeLocation = locations.find((l) => l.is_active) ?? null;
+
+  // A key that changes whenever the active city or saved-satellite set changes,
+  // so the passes view remounts and re-fetches when either input changes.
+  const passesKey = `${activeLocation?.id ?? "none"}|${[...savedIds]
+    .sort()
+    .join(",")}`;
 
   return (
     <div className="min-h-screen text-white">
@@ -59,15 +77,34 @@ export default async function Home() {
             <p className="text-slate-400">
               Signed in as{" "}
               <span className="text-emerald-400 font-medium">{user.email}</span>
+              {activeLocation && (
+                <>
+                  {" · tracking from "}
+                  <span className="text-slate-300">
+                    {activeLocation.city_name}
+                  </span>
+                </>
+              )}
             </p>
           </div>
 
-          {/* City search — look up a location to get its coordinates. */}
+          {/* City search — selecting a city saves it to the user's locations. */}
           <CitySearch />
+
+          {/* Saved cities (up to 5): switch the active one or remove. */}
+          <LocationsBar locations={locations} />
 
           {/* Browse / search satellites and save them to a personal list.
               savedIds comes from the per-user, RLS-protected query above. */}
           <SatelliteBrowser catalog={SATELLITES} savedIds={savedIds} />
+
+          {/* Upcoming passes for each saved satellite, from the saved location.
+              Remounts (via key) whenever the location or saved set changes. */}
+          <PassesView
+            key={passesKey}
+            hasLocation={!!activeLocation}
+            hasSatellites={savedIds.length > 0}
+          />
         </main>
       </div>
     </div>

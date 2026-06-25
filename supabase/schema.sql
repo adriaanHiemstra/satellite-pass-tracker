@@ -43,6 +43,24 @@ begin
   end if;
 end $$;
 
+-- Locations: a user can save several cities (capped at 5 in the app) and switch
+-- between them. Exactly ONE is the "active" observer location used for passes.
+--
+-- `is_active` marks the chosen city. The partial unique index guarantees a user
+-- can have at most one active location at a time.
+--
+-- (We drop the older one-location-per-user constraint if it exists, since the
+-- model is now multiple locations.)
+alter table public.saved_locations
+  drop constraint if exists saved_locations_user_unique;
+
+alter table public.saved_locations
+  add column if not exists is_active boolean not null default true;
+
+create unique index if not exists saved_locations_one_active_per_user
+  on public.saved_locations (user_id)
+  where is_active;
+
 
 -- ----------------------------------------------------------------------------
 -- Row Level Security
@@ -73,6 +91,7 @@ create policy "Users can delete their own satellites"
 -- --- saved_locations policies ----------------------------------------------
 drop policy if exists "Users can view their own locations"   on public.saved_locations;
 drop policy if exists "Users can insert their own locations" on public.saved_locations;
+drop policy if exists "Users can update their own locations" on public.saved_locations;
 drop policy if exists "Users can delete their own locations" on public.saved_locations;
 
 create policy "Users can view their own locations"
@@ -81,6 +100,13 @@ create policy "Users can view their own locations"
 
 create policy "Users can insert their own locations"
   on public.saved_locations for insert
+  with check (auth.uid() = user_id);
+
+-- UPDATE is required because we upsert the location (insert-or-update). It needs
+-- both USING (which rows you may change) and WITH CHECK (what the new row may be).
+create policy "Users can update their own locations"
+  on public.saved_locations for update
+  using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
 create policy "Users can delete their own locations"

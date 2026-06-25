@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { saveLocation } from "@/app/locations/actions";
 
 // Shape of a single city result from the Open-Meteo geocoding API.
 // We only type the fields we actually use.
@@ -30,6 +31,9 @@ export default function CitySearch() {
   const [loading, setLoading] = useState(false);
   // The city the user has confirmed by clicking it.
   const [selected, setSelected] = useState<GeoResult | null>(null);
+  // Tracks the background save of the chosen location to the database.
+  const [isSaving, startSaving] = useTransition();
+  const [saveError, setSaveError] = useState("");
 
   // When we auto-fill the input after a selection, we set this flag so the
   // search effect skips that one change (otherwise picking a city would
@@ -114,19 +118,17 @@ export default function CitySearch() {
     setQuery(formatCity(city)); // fill the box with the chosen city
     setResults([]); // close the dropdown
     setError("");
+    setSaveError("");
 
-    // NOTE: Intentional, not leftover debug output. Logging the exact
-    // coordinates is the Phase 3 (Core 3) deliverable. This will be removed in
-    // Core 5, when the selected location is passed to the satellite passes view.
-    console.log(
-      `Selected ${city.name}: latitude ${city.latitude}, longitude ${city.longitude}`,
-    );
-    console.log({
-      name: city.name,
-      region: city.admin1,
-      country: city.country,
-      latitude: city.latitude,
-      longitude: city.longitude,
+    // Persist the chosen location to the database (one row per user). The
+    // passes view reads this back to know where to compute passes from.
+    startSaving(async () => {
+      const result = await saveLocation({
+        cityName: formatCity(city),
+        latitude: city.latitude,
+        longitude: city.longitude,
+      });
+      if ("error" in result) setSaveError(result.error);
     });
   }
 
@@ -196,10 +198,16 @@ export default function CitySearch() {
       {selected && (
         <div className="mt-4 p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-md">
           <p className="text-emerald-300 text-sm font-medium">
-            Location set: {formatCity(selected)}
+            {isSaving
+              ? `Saving ${formatCity(selected)}…`
+              : saveError
+                ? "Couldn't save location"
+                : `Location saved: ${formatCity(selected)}`}
           </p>
           <p className="text-slate-400 text-xs mt-1">
-            Latitude {selected.latitude}, Longitude {selected.longitude}
+            {saveError
+              ? saveError
+              : `Latitude ${selected.latitude}, Longitude ${selected.longitude}`}
           </p>
         </div>
       )}
