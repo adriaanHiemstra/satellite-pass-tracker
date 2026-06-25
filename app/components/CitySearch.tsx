@@ -133,7 +133,7 @@ export default function CitySearch() {
   }
 
   return (
-    <div className="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg shadow-2xl p-6">
+    <div className="relative z-20 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg shadow-2xl p-6">
       <h2 className="text-xl font-semibold mb-1 text-emerald-400">
         Find Your Location
       </h2>
