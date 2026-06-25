@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllPasses, type PassesResult } from "@/app/passes/actions";
+import PassArc from "./PassArc";
 
 interface Props {
   hasLocation: boolean;
@@ -68,6 +69,20 @@ export default function PassesView({ hasLocation, hasSatellites }: Props) {
     });
   }
 
+  // Satellites with upcoming passes float to the top (soonest first); the ones
+  // that don't pass over the active city sink to the bottom (and get dimmed).
+  const sortedSatellites = result?.ok
+    ? [...result.satellites].sort((a, b) => {
+        const aHas = a.passes.length > 0 ? 0 : 1;
+        const bHas = b.passes.length > 0 ? 0 : 1;
+        if (aHas !== bHas) return aHas - bHas;
+        if (a.passes.length && b.passes.length) {
+          return a.passes[0].startUTC - b.passes[0].startUTC;
+        }
+        return 0;
+      })
+    : [];
+
   return (
     <section className="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl shadow-2xl p-6">
       <div className="flex items-center justify-between mb-1">
@@ -94,11 +109,15 @@ export default function PassesView({ hasLocation, hasSatellites }: Props) {
         , in your local time.
       </p>
 
-      {/* Loading state */}
+      {/* Loading state: skeleton placeholders that mirror the real layout. */}
       {loading && (
-        <div className="flex items-center gap-3 text-slate-400 py-8 justify-center">
-          <span className="h-4 w-4 rounded-full border-2 border-slate-600 border-t-emerald-400 animate-spin" />
-          Calculating upcoming passes…
+        <div className="space-y-5" aria-busy="true" aria-label="Loading passes">
+          {[0, 1].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-4 w-32 bg-slate-700/50 rounded mb-3" />
+              <div className="h-24 bg-slate-800/50 border border-slate-700/40 rounded-lg" />
+            </div>
+          ))}
         </div>
       )}
 
@@ -132,9 +151,18 @@ export default function PassesView({ hasLocation, hasSatellites }: Props) {
       {/* Results */}
       {!loading && result?.ok && (
         <div className="space-y-5">
-          {result.satellites.map((sat) => (
-            <div key={sat.noradId}>
-              <h3 className="text-white font-medium mb-2">{sat.name}</h3>
+          {sortedSatellites.map((sat) => {
+            const hasPasses = !sat.error && sat.passes.length > 0;
+            return (
+            <div key={sat.noradId} className={hasPasses ? "" : "opacity-60"}>
+              <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                {sat.name}
+                {!hasPasses && !sat.error && (
+                  <span className="text-xs font-normal text-slate-500">
+                    · none soon
+                  </span>
+                )}
+              </h3>
 
               {sat.error ? (
                 <p className="text-red-300/80 text-sm">{sat.error}</p>
@@ -149,7 +177,7 @@ export default function PassesView({ hasLocation, hasSatellites }: Props) {
                       key={i}
                       className="px-4 py-3 bg-slate-800/40 border border-slate-700/60 rounded-lg"
                     >
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
                         <span className="text-white font-medium">
                           {fmtDateTime(p.startUTC)}
                         </span>
@@ -158,8 +186,10 @@ export default function PassesView({ hasLocation, hasSatellites }: Props) {
                           {Math.round(p.maxEl)}°
                         </span>
                       </div>
+                      {/* Sky arc: visual rise → peak → set for this pass */}
+                      <PassArc maxEl={p.maxEl} />
                       {/* Rise → peak → set timeline in local time */}
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400">
+                      <div className="grid grid-cols-3 gap-2 text-xs text-slate-400">
                         <span>
                           <span className="text-slate-500">Rise</span>{" "}
                           {fmtClock(p.startUTC)} · {p.startAzCompass}
@@ -178,7 +208,8 @@ export default function PassesView({ hasLocation, hasSatellites }: Props) {
                 </ul>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

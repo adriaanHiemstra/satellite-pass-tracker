@@ -72,3 +72,39 @@
 | 8   | No duplicates      | Save the same satellite twice quickly                 | Saved once; no error                                  |
 | 9   | RLS isolation      | User B signs in after user A saved items              | User B sees none of user A's saved satellites         |
 | 10  | RLS enabled (DB)   | Run the `rowsecurity` query in Supabase SQL Editor    | Both tables show `rowsecurity = true`                 |
+
+## Feature: Passes View (Core 5)
+
+| #  | Scenario             | Steps                                  | Expected Result                                           |
+| -- | -------------------- | -------------------------------------- | --------------------------------------------------------- |
+| 1  | Empty: no location   | Log in fresh, no city saved            | "Search for your city above…"                            |
+| 2  | Empty: no satellites | Save a city but no satellites          | "Save some satellites above…"                            |
+| 3  | Loading state        | With city + satellites, load dashboard | Skeleton placeholders, then results                       |
+| 4  | Passes shown         | Save a city + ISS                      | Upcoming passes: rise/peak/set times + duration           |
+| 5  | Local time           | Compare times to your timezone         | Times match your local clock                              |
+| 6  | Per-satellite empty  | Satellite that doesn't pass over       | "No upcoming passes…" for just that one                   |
+| 7  | Auto-refresh         | Save another satellite                 | Passes section updates to include it                      |
+| 8  | Refresh button       | Click ↻ Refresh                        | Re-fetches and re-renders                                 |
+| 9  | Location persists    | Save a city, reload                    | "tracking from {city}" still shown                        |
+
+## Feature: Multiple Locations (Core 5+)
+
+| #  | Scenario          | Steps                                    | Expected Result                                       |
+| -- | ----------------- | ---------------------------------------- | ----------------------------------------------------- |
+| 1  | Add cities        | Select 3 different cities                | 3 chips appear; newest is active                      |
+| 2  | Switch active     | Click a non-active city chip             | It becomes active; passes re-fetch for it             |
+| 3  | Shared satellites | Switch cities                            | Same saved satellites; only the passes change         |
+| 4  | Remove a city     | Click ✕ on a city                        | Removed; if it was active, another becomes active     |
+| 5  | 5-city cap        | Try to add a 6th city                    | Error: "You can save up to 5 locations…"; not added   |
+| 6  | Re-select saved   | Select a city that's already saved       | No duplicate; it just becomes active                  |
+| 7  | Replace location  | Save city A, then select city B          | Switches to B; no RLS error; one row per city         |
+| 8  | RLS isolation     | Second account                           | Sees none of the first account's cities               |
+
+## Feature: Pass Sky-Arc (Stretch A)
+
+| #  | Scenario           | Steps                          | Expected Result                                   |
+| -- | ------------------ | ------------------------------ | ------------------------------------------------- |
+| 1  | Arc renders        | View a satellite with passes   | Each pass shows a sky-arc above its rise/set row  |
+| 2  | Height = elevation | Compare a high vs low pass     | Higher peak elevation → taller arc                |
+| 3  | No passes          | Satellite with no passes       | No arc; "No upcoming passes…" shown instead       |
+| 4  | Responsive         | Narrow the window              | Arc scales to width; line stays crisp             |
